@@ -1,51 +1,25 @@
 package main
 
 import (
-	"encoding/csv"
+	"crypto/sha256"
 	"fmt"
-	"os"
+	"time"
 )
 
 func main() {
-	credentialsInput()
+	site_url, login, passphrase := credentialsInput()
+	generatePassword(site_url, login, passphrase)
 }
 
-func csvReadAll(filepath string) ([][]string, error) {
-	// Open file
-	recordsFile, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
+func generatePassword(site_url string, login string, passphrase string) {
+	current_time := time.Now().String()
+	data := []byte(site_url + login + passphrase + current_time)
+	hash := sha256.Sum256(data)
+	password := [8]byte{}
+	for i := 0; i < 8; i++ {
+		password[i] = hash[4*i] + hash[4*i+1] + hash[4*i+2] + hash[4*i+3]
 	}
-	defer recordsFile.Close()
-
-	// Read file
-	reader := csv.NewReader(recordsFile)
-	records, err := reader.ReadAll()
-	if err != nil {
-		return nil, err
-	}
-	return records, nil
-}
-
-func csvWriter(filepath string, csv_data [][]string) (err error) {
-	// Create or open file
-	recordsFile, err := os.Create(filepath)
-	if err != nil {
-		return
-	}
-
-	// Close file
-	defer func() {
-        cerr := recordsFile.Close()
-        if err == nil {
-            err = cerr
-        }
-    }()
-
-	// Write to file
-	writer := csv.NewWriter(recordsFile)
-	err = writer.WriteAll(csv_data)
-	return
+	fmt.Printf("%x", password)
 }
 
 func printCSV(filepath string) {
@@ -57,28 +31,21 @@ func printCSV(filepath string) {
 	}
 }
 
-func credentialsInput() {
-	fmt.Println("Enter site url: ")
-
-	var site_url string
+func credentialsInput() (site_url string, login string, passphrase string) {
+	fmt.Print("Enter site url: ")
 	fmt.Scanln(&site_url)
 
-	fmt.Println("Enter your login: ")
-
-	var login string
+	fmt.Print("Enter your login: ")
 	fmt.Scanln(&login)
 
-	fmt.Println("Enter your password: ")
-
-	var passphrase string
+	fmt.Print("Enter your password: ")
 	fmt.Scanln(&passphrase)
 
-	fmt.Println("Do you want to print saved records? (y/n) ")
-
 	var answer string
+	fmt.Print("Do you want to print saved records? (y/n) ")
 	fmt.Scanln(&answer)
-
 	if answer == "y" {
 		printCSV("./records.csv")
 	}
+	return
 }
