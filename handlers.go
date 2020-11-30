@@ -42,3 +42,24 @@ func csvWrite(filepath string, csv_data [][]string) (err error) {
 	err = writer.WriteAll(csv_data)
 	return
 }
+
+func csvAddWrite(filepath string, csv_data []string) (err error) {
+	// Create or open file
+	recordsFile, err := os.Create(filepath)
+	if err != nil {
+		return
+	}
+
+	// Close file
+	defer func() {
+        cerr := recordsFile.Close()
+        if err == nil {
+            err = cerr
+        }
+    }()
+
+	// Write to file
+	writer := csv.NewWriter(recordsFile)
+	err = writer.WriteAll(csv_data)
+	return
+}

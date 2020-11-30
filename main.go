@@ -6,24 +6,34 @@ import (
 	"time"
 )
 
+PASSWORDS_FILEPATH := "./records.csv"
+
 func main() {
-	site_url, login, passphrase := credentialsInput()
-	generatePassword(site_url, login, passphrase)
+	showMenu()
 }
 
-func generatePassword(site_url string, login string, passphrase string) {
-	current_time := time.Now().String()
-	data := []byte(site_url + login + passphrase + current_time)
-	hash := sha256.Sum256(data)
-	password := [8]byte{}
-	for i := 0; i < 8; i++ {
-		password[i] = hash[4*i] + hash[4*i+1] + hash[4*i+2] + hash[4*i+3]
+func showMenu() {
+	option = chooseMenuOption()
+
+	if option == 1 {
+		printCSV()
+		showMenu()
+	} else if option == 2 {
+		addNewPassword()
+		showMenu()
 	}
-	fmt.Printf("%x", password)
 }
 
-func printCSV(filepath string) {
-	csv_data, err := csvReadAll(filepath)
+func chooseMenuOption() option int {
+	fmt.Println("Please type number of option, you want to choose:")
+	fmt.Println("1 - Show passwords")
+	fmt.Println("2 - Add new password")
+	fmt.Scanln(&option)
+	return
+}
+
+func printCSV() {
+	csv_data, err := csvReadAll(PASSWORDS_FILEPATH)
 	if err != nil {
 		fmt.Println("An error encountered ::", err)
 	} else {
@@ -31,7 +41,14 @@ func printCSV(filepath string) {
 	}
 }
 
-func credentialsInput() (site_url string, login string, passphrase string) {
+func addNewPassword() {
+	site_url, login, passphrase := inputData()
+	current_time := time.Now().String()
+	password := generatePassword(site_url, login, current_time, passphrase)
+	saveData(site_url, login, current_time, password)
+}
+
+func inputData() (site_url string, login string, passphrase string) {
 	fmt.Print("Enter site url: ")
 	fmt.Scanln(&site_url)
 
@@ -41,11 +58,25 @@ func credentialsInput() (site_url string, login string, passphrase string) {
 	fmt.Print("Enter your password: ")
 	fmt.Scanln(&passphrase)
 
-	var answer string
-	fmt.Print("Do you want to print saved records? (y/n) ")
-	fmt.Scanln(&answer)
-	if answer == "y" {
-		printCSV("./records.csv")
-	}
 	return
+}
+
+func generatePassword(site_url string, login string, now string, passphrase string) password string {
+	data := []byte(site_url + login + passphrase + now)
+	hash := sha256.Sum256(data)
+	password := [8]byte{}
+	for i := 0; i < 8; i++ {
+		password[i] = hash[4*i] + hash[4*i+1] + hash[4*i+2] + hash[4*i+3]
+	}
+	fmt.Printf("%x", password)
+	return
+}
+
+func saveData(site_url string, login string, current_time string, password string) {
+	csv_data, err := csvReadAll(PASSWORDS_FILEPATH)
+	if err != nil {
+		fmt.Println("An error encountered ::", err)
+	} else {
+		fmt.Println(csv_data)
+	}
 }
